@@ -32,25 +32,4 @@ ger_lvl3 <- raster::getData(name = "GADM", country = "Germany", level = 3)
 # binnedplot documentation 
 # https://www.rdocumentation.org/packages/arm/versions/1.10-1/topics/binnedplot
 
-# todo: 
-
-# gam für regen/temp height               done
-# stability of models                     done  
-# plot interaction and interpret it       done
-# interpret models                        done
-# verify everything runs                  done
-# folderstructure                         done
-# variables in snake_case                 done
-# model for viereckschanzen               done
-# models for all points                   done
-# documentation of functions              done
-# pack everything in Rmarkdown            done
-
-# interaction plots & Interpretation      done
-# Predictive Mapping methods              done
-# Predictive Maps plots                   done
-# AUROC                                   done
-# Resampling Methods                      done
-# Fazit                                   done
-# Ausblick                                done
-# Zitieren                                done
+# did it work?
