@@ -1,0 +1,72 @@
+<title>Maxent model for species</title>
+<CENTER><H1>Maxent model for species</H1></CENTER>
+<br> This page contains some analysis of the Maxent model for species, created Sun May 19 13:36:15 CEST 2019 using Maxent version 3.4.1.  If you would like to do further analyses, the raw data used here is linked to at the end of this page.<br>
+<br><HR><H2>Analysis of omission/commission</H2>
+The following picture shows the omission rate and predicted area as a function of the cumulative threshold.  The omission rate is is calculated both on the training presence records, and (if test data are used) on the test records.  The omission rate should be close to the predicted omission, because of the definition of the cumulative threshold.
+<br><img src="plots/species_omission.png"><br>
+<br> The next picture is the receiver operating characteristic (ROC) curve for the same data.  Note that the specificity is defined using predicted area, rather than true commission (see the paper by Phillips, Anderson and Schapire cited on the help page for discussion of what this means).  This implies that the maximum achievable AUC is less than 1.  If test data is drawn from the Maxent distribution itself, then the maximum possible test AUC would be 0.684 rather than 1; in practice the test AUC may exceed this bound.
+<br><img src="plots/species_roc.png"><br>
+<br>
+<br>
+Some common thresholds and corresponding omission rates are as follows.  If test data are available, binomial probabilities are calculated exactly if the number of test samples is at most 25, otherwise using a normal approximation to the binomial.  These are 1-sided p-values for the null hypothesis that test points are predicted no better than by a random prediction with the same fractional predicted area.  The "Balance" threshold minimizes 6 * training omission rate + .04 * cumulative threshold + 1.6 * fractional predicted area.<br>
+<br><table border cols=4 cellpadding=3><tr><th>Cumulative threshold</th><th>Cloglog threshold</th><th>Description</th><th>Fractional predicted area</th><th>Training omission rate</th><tr align=center><td>1.000</td><td>0.144</td><td>Fixed cumulative value 1</td><td>0.875</td><td>0.007</td><tr align=center><td>5.000</td><td>0.298</td><td>Fixed cumulative value 5</td><td>0.752</td><td>0.044</td><tr align=center><td>10.000</td><td>0.397</td><td>Fixed cumulative value 10</td><td>0.659</td><td>0.090</td><tr align=center><td>0.022</td><td>0.012</td><td>Minimum training presence</td><td>0.976</td><td>0.000</td><tr align=center><td>11.121</td><td>0.416</td><td>10 percentile training presence</td><td>0.642</td><td>0.100</td><tr align=center><td>38.611</td><td>0.627</td><td>Equal training sensitivity and specificity</td><td>0.360</td><td>0.360</td><tr align=center><td>28.100</td><td>0.571</td><td>Maximum training sensitivity plus specificity</td><td>0.450</td><td>0.257</td><tr align=center><td>0.988</td><td>0.143</td><td>Balance training omission, predicted area and threshold value</td><td>0.876</td><td>0.006</td><tr align=center><td>3.392</td><td>0.254</td><td>Equate entropy of thresholded and original distributions</td><td>0.791</td><td>0.027</td></table><br>
+<br>(A link to the Explain tool was not made for this model.  The model uses product features, while the Explain tool can only be used for additive models.)<br><br>
+<br><HR><H2>Response curves</H2>
+<br>These curves show how each environmental variable affects the Maxent prediction.
+The 
+curves show how the predicted probability of presence changes as each environmental variable is varied, keeping all other environmental variables at their average sample value. Click on a response curve to see a larger version.  Note that the curves can be hard to interpret if you have strongly correlated variables, as the model may depend on the correlations in ways that are not evident in the curves.  In other words, the curves show the marginal effect of changing exactly one variable, whereas the model may take advantage of sets of variables changing together.<br><br>
+<a href = "plots/species_aspect.png"> <img src="plots/species_aspect_thumb.png"></a>
+<a href = "plots/species_corine.png"> <img src="plots/species_corine_thumb.png"></a>
+<a href = "plots/species_distance_loess.png"> <img src="plots/species_distance_loess_thumb.png"></a>
+<a href = "plots/species_distance_water.png"> <img src="plots/species_distance_water_thumb.png"></a>
+<a href = "plots/species_frostdays.png"> <img src="plots/species_frostdays_thumb.png"></a>
+<a href = "plots/species_height.png"> <img src="plots/species_height_thumb.png"></a>
+<a href = "plots/species_rain.png"> <img src="plots/species_rain_thumb.png"></a>
+<a href = "plots/species_slope.png"> <img src="plots/species_slope_thumb.png"></a>
+<a href = "plots/species_sunhours.png"> <img src="plots/species_sunhours_thumb.png"></a>
+<a href = "plots/species_temp.png"> <img src="plots/species_temp_thumb.png"></a>
+<a href = "plots/species_tpi.png"> <img src="plots/species_tpi_thumb.png"></a>
+<br>
+<br>In contrast to the above marginal response curves, each of the following curves represents a different model, namely, a Maxent model created using only the corresponding variable.  These plots reflect the dependence of predicted suitability both on the selected variable and on dependencies induced by correlations between the selected variable and other variables.  They may be easier to interpret if there are strong correlations between variables.<br><br>
+<a href = "plots/species_aspect_only.png"> <img src="plots/species_aspect_only_thumb.png"></a>
+<a href = "plots/species_corine_only.png"> <img src="plots/species_corine_only_thumb.png"></a>
+<a href = "plots/species_distance_loess_only.png"> <img src="plots/species_distance_loess_only_thumb.png"></a>
+<a href = "plots/species_distance_water_only.png"> <img src="plots/species_distance_water_only_thumb.png"></a>
+<a href = "plots/species_frostdays_only.png"> <img src="plots/species_frostdays_only_thumb.png"></a>
+<a href = "plots/species_height_only.png"> <img src="plots/species_height_only_thumb.png"></a>
+<a href = "plots/species_rain_only.png"> <img src="plots/species_rain_only_thumb.png"></a>
+<a href = "plots/species_slope_only.png"> <img src="plots/species_slope_only_thumb.png"></a>
+<a href = "plots/species_sunhours_only.png"> <img src="plots/species_sunhours_only_thumb.png"></a>
+<a href = "plots/species_temp_only.png"> <img src="plots/species_temp_only_thumb.png"></a>
+<a href = "plots/species_tpi_only.png"> <img src="plots/species_tpi_only_thumb.png"></a>
+<br>
+<br><HR><H2>Analysis of variable contributions</H2><br>
+The following table gives estimates of relative contributions of the environmental variables to the Maxent model.  To determine the first estimate, in each iteration of the training algorithm, the increase in regularized gain is added to the contribution of the corresponding variable, or subtracted from it if the change to the absolute value of lambda is negative.  For the second estimate, for each environmental variable in turn, the values of that variable on training presence and background data are randomly permuted.  The model is reevaluated on the permuted data, and the resulting drop in training AUC is shown in the table, normalized to percentages.  As with the variable jackknife, variable contributions should be interpreted with caution when the predictor variables are correlated.<br>
+<br><table border cols=3><tr><th>Variable</th><th>Percent contribution</th><th>Permutation importance</th><tr align=right><td>distance_loess</td><td>27.5</td><td>23</td></tr><tr align=right><td>frostdays</td><td>24.4</td><td>11.5</td></tr><tr align=right><td>corine</td><td>23.9</td><td>21.3</td></tr><tr align=right><td>rain</td><td>15.8</td><td>20</td></tr><tr align=right><td>distance_water</td><td>2.7</td><td>2.4</td></tr><tr align=right><td>height</td><td>2.1</td><td>7.7</td></tr><tr align=right><td>sunhours</td><td>1.5</td><td>1.2</td></tr><tr align=right><td>temp</td><td>0.9</td><td>12.1</td></tr><tr align=right><td>aspect</td><td>0.6</td><td>0.7</td></tr><tr align=right><td>slope</td><td>0.5</td><td>0.1</td></tr><tr align=right><td>tpi</td><td>0</td><td>0</td></tr></table><br><br>
+<br><HR><H2>Raw data outputs and control parameters</H2><br>
+The data used in the above analysis is contained in the next links.  Please see the Help button for more information on these.<br>
+<a href = "species.csv">The model applied to the training environmental layers</a><br>
+<a href = "species.lambdas">The coefficients of the model</a><br>
+<a href = "species_omission.csv">The omission and predicted area for varying cumulative and raw thresholds</a><br>
+<a href = "species_samplePredictions.csv">The prediction strength at the training and (optionally) test presence sites</a><br>
+<a href = "maxentResults.csv">Results for all species modeled in the same Maxent run, with summary statistics and (optionally) jackknife results</a><br>
+<br><br>
+Regularized training gain is 0.235, training AUC is 0.691, unregularized training gain is 0.251.<br>
+Algorithm terminated after 500 iterations (13 seconds).<br>
+<br>
+The follow settings were used during the run:<br>
+3139 presence records used for training.<br>
+7648 points used to determine the Maxent distribution (background points and presence points).<br>
+Environmental layers used: aspect(categorical) corine(categorical) distance_loess distance_water frostdays height rain slope sunhours temp tpi<br>
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500<br>
+Feature types used: hinge product linear quadratic<br>
+responsecurves: true<br>
+outputdirectory: Output/Maxent_s<br>
+samplesfile: Output/Maxent_s/presence<br>
+environmentallayers: Output/Maxent_s/absence<br>
+autorun: true<br>
+visible: false<br>
+prefixes: false<br>
+Command line used:  autorun -e Output/Maxent_s/absence -o Output/Maxent_s -s Output/Maxent_s/presence -z responsecurves<br>
+<br>
+Command line to repeat this species model: java density.MaxEnt nowarnings noprefixes -E "" -E species responsecurves outputdirectory=Output/Maxent_s samplesfile=Output/Maxent_s/presence environmentallayers=Output/Maxent_s/absence autorun novisible noprefixes -t aspect -t corine<br>

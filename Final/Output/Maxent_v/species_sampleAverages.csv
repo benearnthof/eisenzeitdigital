@@ -1,0 +1,12 @@
+Predictor variable,Categorical,Sample average
+aspect,true,1.0
+corine,true,211.0
+distance_loess,false,2.1024310661084726
+distance_water,false,3.5646085570556947
+frostdays,false,8.822083842473399
+height,false,4.575690234148944
+rain,false,828.7306397306397
+slope,false,0.9144946858286858
+sunhours,false,3.72633413273076
+temp,false,8.062626292809894
+tpi,false,0.5606060606060606

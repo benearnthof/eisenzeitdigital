@@ -1,0 +1,221 @@
+---
+title: "Functions required for sampling of nonpresence data"
+author: "EZD Team"
+date: "20 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 14, dpi = 300)
+
+# Load Packages
+source("loadpackages.R")
+```
+
+# Loading all required objects
+
+- Shapefiles for rivers and Loess
+```{r eval=FALSE}
+shapewater <- shapefile("../../Daten/Raster/RawFiles/DEU_water_lines_dcw.shx")
+loess_shape <- shapefile("../../Daten/Raster/RawFiles/Loess/gk500_haupteinheiten_epsg4258.shx")
+```
+
+- Rasterfiles that are required for sampling points from within Bavaria
+```{r eval=FALSE}
+ger <- raster::getData(name = "GADM", country = "Germany", level = 1)
+ger_alt <- raster::getData(name = "alt", country = "Germany")
+```
+
+- The coordinates of Bavarias border will serve as a default border for bavSamp()
+```{r eval=FALSE}
+bayern_coords <- ger@polygons[[2]]@Polygons[[1]]@coords
+```
+
+# Automating Samplingprocess
+- Function to sample random points from bavaria
+
+```{r eval=FALSE}
+#' bavSamp: Sample random points from within the borders of Bavaria. The Function will run a set amount of iterations until returning a spatial.points.data.frame that contains a random sample of coordinate pairs within Bavaria. The function initializes an empty spatial.points.data.frame that will gradually be filled up with the sampled points. 
+#'
+#' @param from Raster from which the points are sampled originally.
+#' @param within Polygon, borders of region in which the points should fall.
+#' @param size Size of coordinate pair sample that gets drawn in every iteration. 
+#' @param maxiter Maximum number of iterations the function will run.
+#' @param rlength Number of points that should be returned.
+#'
+#' @return a spatial.points.data.frame
+#' @export
+#'
+#' @examples
+bavSamp <- function(from = ger_alt, within = bayern_coords, size = 1000, maxiter = 100, rlength = 100){
+  i <- 0
+  iteration <- 1
+  returnframe <- new("SpatialPoints",   
+                     coords = structure(numeric(0), .Dim = c(0L, 2L),                                  .Dimnames = list(NULL, c("coords.x1", "coords.x2"))),  
+                     bbox = structure(c(1, 1, 1, 1), .Dim = c(2L, 2L),                                 .Dimnames = list(c("coords.x1", "coords.x2"), c("min", "max"))),
+                     proj4string = new("CRS", projargs = NA_character_))
+  if (i >= maxiter) {
+    warning("Maximum number of iterations reached \n Returning sample.")
+    warning("Sampling iterations: ", print(i))
+    return(returnframe)    
+  }
+  while (i < maxiter) {
+    print(iteration)
+    temp <- sampleRandom(from, size, sp = T)
+    checkvector <- point.in.polygon(temp@coords[,1], temp@coords[,2], bayern_coords[,1], bayern_coords[,2])
+    checkvector <- as.logical(checkvector)
+    temp <- temp[checkvector,]
+    returnframe <- union(returnframe, temp)
+    iteration <- iteration + 1
+    if (nrow(returnframe@coords) >= rlength) {
+      returnframe <- returnframe[1:rlength,]
+      # set i equal to maxiter to abort sampling process early
+      i <- maxiter
+    }
+  }
+  return(returnframe)
+}
+```
+- Function to split data.frames into parts of equal length.
+```{r eval=FALSE}
+#' Splitframe: Split data.frame into parts of equal length.
+#'
+#' @param df Input data.frame.
+#' @param splits Number of parts to split the data.frame into. Nrow of input data.frame has to be a multiple of splits.
+#'
+#' @return A list of the split data.frames. Output in the form of a list is here desired, since this function is being called in order to utilize parallelization supplied by the foreach and %dopar% operators. 
+#' @export
+#'
+#' @examples
+splitframe <- function(df, splits) {
+  if (mod(nrow(df), splits) != 0) {
+    stop("nrow is not a multiple of splits")
+  }
+  pointsliste <- list()
+  j <- 0
+  for (i in 1:splits) {
+    pointsliste[[i]] <- df[(j + 1):(i*(nrow(df)/splits)),]
+    j <- j + (nrow(df)/splits)
+  }
+  return(pointsliste)
+}
+```
+- Function to calculate accurate point distances to the rivershapefile. 
+```{r eval=FALSE}
+#' pardist2water: Calculating point distances to rivers in parallel. The approach via the foreach and doParallel libraries might be less elegant than the builtin functionality for parallel calculation supplied by R on linux systems, but this code should run independent of operating systems.
+#'
+#' @param pnts A data.frame containing coordinates.
+#' @param shapef The rivershapefile the distances will be calculated to
+#' @param splits The amount of splits the splitframe() call will execute.
+#' @param workers The amount of workers for parallel computation. For 4 core systems 4 workers seem ideal to reduce overhead by setting up more workers for every thread. For larger datasets or stronger processors a larger workforce would of course be ideal. 
+#'
+#' @return A dataframe augmented with the desired distances.
+#' @export
+#'
+#' @examples
+pardist2water <- function(pnts, shapef = shapewater, splits = 10, workers = 4) {
+  pnts <- as.data.frame(pnts)
+  # split into equal parts
+  pointsliste <- splitframe(pnts, splits)
+  registerDoParallel(cores = workers)
+  tmp <- foreach(i = 1:splits) %dopar% {
+    geosphere::dist2Line(p = pointsliste[[i]], line = shapef)
+  }
+  # unlist tmp to data.frame
+  tmp <- do.call(rbind, tmp)
+  # bind results with original points
+  tmp <- cbind(pnts, tmp)
+  return(tmp)
+}
+```
+- Function to fully automate sampling process for coordinate pairs
+```{r eval=FALSE}
+#' runValidation: Full automated point sampling and point distance calculation.
+#'
+#' @param numrows Number of desired points.
+#' @param rseed Random seed to make results replicable.
+#'
+#' @return A data.frame.
+#' @export
+#'
+#' @examples
+runValidation <- function(numrows, rseed = 1){
+  set.seed(rseed)
+  tmp.set <- bavSamp(size = 5000, rlength = numrows)
+  tmp.points <- tmp.set@coords
+  tmp.points <- as.data.frame(tmp.points)
+  tmp.points <- pardist2water(tmp.points, splits = 8, workers = 8)
+  write.table(tmp.points, file = "../../Daten/negativdaten50k.csv")
+  return(tmp.points)
+}
+```
+# Filtering nonsites
+- Importing data sets to work with
+```{r eval=FALSE}
+sitesdf <- read.table(file = "../../Daten/fenderdistance2water.csv")
+nonsitesdf <- read.table(file = "../../Daten/negativdaten50k.csv")
+```
+
+- Distance function that will be used to calculate point distances
+```{r eval=FALSE}
+#' Haversine distance corrects for the curvature of the earth and thus most accurately calculates the distances between two given points 1 and 2. It also runs faster than the euclidian counterpart. 
+#'
+#' @param lon1 Longitude of point 1.
+#' @param lat1 Latitude of point 1.
+#' @param lon2 Longitude of point 2.
+#' @param lat2 Longitutde of point 2.
+#' @param r The radius of the sphere the points are located on. Default case equals the radius of the earth.
+#'
+#' @return The calculated distance.
+#' @export
+#'
+#' @examples
+dist_haversine <- function(lon1, lat1, lon2, lat2, r = 6378.388){
+  # r = radius of the sphere the coordinates are located on e.g. the earth
+  # calculate distance and return result in km
+  temp <- 2*r*asin(sqrt((sin(((lat2 - lat1)*(pi/180))/2))^2 + cos(lat1*(pi/180))*cos(lat2*(pi/180)) * sin((((lon1 - lon2)*(pi/180))/2))^2))
+  return(temp)
+}
+```
+- Filter function to remove all points that are too close to the sites.
+```{r eval=FALSE}
+#' Filters nonsite points that are too close to sites. 
+#'
+#' @param samplefrom Data.frame that contains nonsites in question.
+#' @param checkagainst Data.frame that contains sites to be checked.
+#' @param margin Radius in km around sites to remove nonsites from. 
+#'
+#' @return The samplefrom data.frame without the filtered points.
+#' @export
+#'
+#' @examples
+filterbymargin_haversine <- function(samplefrom, checkagainst, margin = 1.5) {
+  df <- samplefrom
+  df$temporary <- 0
+  for (i in 1:nrow(checkagainst)){
+    df$temporary <- mapply(dist_haversine, df$lon, df$lat, checkagainst$lon[i], checkagainst$lat[i])
+    df <- df[(df$temporary>margin),]
+  }
+  df$temporary <- NULL
+  return(df)
+}
+```
+- Filtering out nonsites that are close than 1.5 km to sites
+```{r eval=FALSE}
+negative50kfiltered <- filterbymargin_haversine(samplefrom = nonsitesdf, checkagainst = sitesdf, margin = 1.5)
+nrow(negative50kfiltered)
+write.table(negative50kfiltered, file = "../../Daten/neg29kfiltered.csv")
+```
+
+
+

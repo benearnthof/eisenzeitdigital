@@ -1,0 +1,79 @@
+   ***********************************************************************
+   *                       Package   GWmodel                             *
+   ***********************************************************************
+   Program starts at: 2019-05-19 19:57:41 
+   Call:
+   GWmodel::ggwr.basic(formula = model_formula, data = df_viereckschanze_gwglm, 
+    bw = bestBW_viereckschanze, family = "binomial", kernel = "gaussian", 
+    cv = FALSE, maxiter = 25, dMat = dMat_viereckschanze)
+
+   Dependent (y) variable:  site
+   Independent variables:  height temp rain distance_water distance_loess frostdays slope
+   Number of data points: 721
+   Used family: binomial
+   ***********************************************************************
+   *              Results of Generalized linear Regression               *
+   ***********************************************************************
+
+Call:
+NULL
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+ -8.68   -1.22    1.16    1.36   25.33  
+
+Coefficients:
+                Estimate Std. Error z value             Pr(>|z|)    
+Intercept      -0.272229   6.187179   -0.04              0.96491    
+height          0.320244   0.710781    0.45              0.65231    
+temp            0.118899   0.468926    0.25              0.79984    
+rain            0.003539   0.003356    1.05              0.29175    
+distance_water -0.032243   0.037111   -0.87              0.38494    
+distance_loess -0.211617   0.023870   -8.87 < 0.0000000000000002 ***
+frostdays      -0.287132   0.256195   -1.12              0.26239    
+slope          -0.481876   0.132253   -3.64              0.00027 ***
+height:rain    -0.000182   0.000727   -0.25              0.80272    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 999.35  on 720  degrees of freedom
+Residual deviance: 671.07  on 712  degrees of freedom
+AIC: 689.1
+
+Number of Fisher Scoring iterations: 7
+
+
+ AICc:  689.32
+ Pseudo R-square value:  0.3285
+   ***********************************************************************
+   *          Results of Geographically Weighted Regression              *
+   ***********************************************************************
+
+   *********************Model calibration information*********************
+   Kernel function: gaussian 
+   Fixed bandwidth: 0.54527 
+   Regression points: the same locations as observations are used.
+   Distance metric: A distance matrix is specified for this model calibration.
+
+   ************Summary of Generalized GWR coefficient estimates:**********
+                         Min.     1st Qu.      Median     3rd Qu.  Max.
+   Intercept      -116.485509   -8.607991   13.383674   23.447605 59.93
+   height           -4.598426   -2.910643   -1.452995    0.077777 15.02
+   temp             -2.511474    0.448712    1.070169    1.652637  8.09
+   rain             -0.201901   -0.021481   -0.014622   -0.000140  0.04
+   distance_water   -0.147881   -0.025050   -0.011196    0.010826  0.16
+   distance_loess   -1.054500   -0.219903   -0.180703   -0.155509 -0.09
+   frostdays        -2.593120   -1.613820   -0.728196    0.094830  2.79
+   slope            -0.723642   -0.155599   -0.023038    0.028538  0.21
+   height.rain      -0.012609    0.000521    0.002755    0.004326  0.02
+   ************************Diagnostic information*************************
+   Number of data points: 721 
+   GW Deviance: 543.98 
+   AIC : 616.04 
+   AICc : 619.95 
+   Pseudo R-square value:  0.45566 
+
+   ***********************************************************************
+   Program stops at: 2019-05-19 19:57:43 

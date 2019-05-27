@@ -1,0 +1,760 @@
+---
+title: "Konti"
+author: "EZD Team"
+date: "19 Mai 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 14, dpi = 300)
+
+# Load Packages
+require(dplyr)
+require(stringr)
+require(readr)
+require(geosphere)
+require(ggmap)
+library(raster)
+library(ggplot2)
+library(Deducer)
+library(broom)
+library(tidyr)
+```
+
+
+# loading data
+## load data
+```{r eval=FALSE}
+data <- read_csv(
+  "Final/Daten/fender_2017_lk.csv",
+  col_types = cols(
+    `Corine-Code` = col_character(),
+    `Höhe_SRTM1_puffer50m` = col_character(),
+    wkb_geom = col_skip(),
+    wkb_geom_wgs84 = col_skip(),
+    Hangausrichtung_SRTM1_puffer50m = col_character(),
+    Umfeldanalyse_km2 = col_character(),
+    Temperatur_Jahr = col_character()
+  )
+)
+```
+
+## change data to correct arguments
+```{r eval=FALSE}
+# Höhe
+data$Höhe_SRTM1_puffer50m <-
+  data$Höhe_SRTM1_puffer50m %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Neigung
+data$Neigung_SRTM1_puffer50m <-
+  data$Neigung_SRTM1_puffer50m %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Hangausrichtung
+data$Hangausrichtung_SRTM1_puffer50m <-
+  data$Hangausrichtung_SRTM1_puffer50m %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Loess
+data$Loess_1zu500k_puffer50m <-
+  data$Loess_1zu500k_puffer50m %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Wasser
+data$Wasser_puffer50m <-
+  data$Wasser_puffer50m %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Umfeldanalyse
+data$Umfeldanalyse_km2 <-
+  data$Umfeldanalyse_km2 %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Viewshed
+data$Viewshed_km2 <-
+  data$Viewshed_km2 %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+# Temperatur
+data$Temperatur_Jahr <-
+  data$Temperatur_Jahr %>% str_replace_all(",", ".") %>% as.numeric() %>% round(digits = 2)
+
+```
+
+## Sorting epochs by ages
+
+```{r eval=FALSE}
+data <- data %>%
+  mutate(Epoche = if_else(
+    Zeitstellung %in% c(
+      "Frühbronzezeit",
+      "Bronzezeit",
+      "Spätbronzezeit",
+      "Mittelbronzezeit",
+      "Urnenfelderzeit"
+      ,
+      "Urnenfelderzeit, ältere",
+      "Urnenfelderzeit, jüngere",
+      "Metallzeit"
+    ),
+    "Bronzezeit",
+    if_else(
+      Zeitstellung %in% c(
+        "Hallstattzeit",
+        "Hallstattzeit, spät",
+        "Hallstattzeit, früh",
+        "Eisenzeit"
+      ),
+      "Hallstattzeit",
+      if_else(
+        Zeitstellung %in% c(
+          "Latènezeit",
+          "Frühlatènezeit",
+          "Spätlatènezeit",
+          "Mittellatènezeit",
+          "jüngere Latènezeit"
+        ),
+        "Latènezeit",
+        if_else(
+          Zeitstellung %in% c(
+            "Altpaläolithikum",
+            "Mittelpaläolithikum",
+            "Jungpaläolithikum",
+            "Endpaläolithikum",
+            "Paläolithikum",
+            "Spätpaläolithikum"
+          ),
+          "Paläolithikum",
+          if_else(
+            Zeitstellung %in% c(
+              "Endneolithikum",
+              "Glockenbecherkultur",
+              "Großgartacher Kultur",
+              "Linearbandkeramik",
+              "Michelsberger Kultur"
+              ,
+              "Mittelneolithikum",
+              "Mondsee Gruppe",
+              "Mönchshöfener Kultur",
+              "Neolithikum",
+              "Oberlauterbach",
+              "Polling",
+              "Rössener Kultur",
+              "Schnurkeramik",
+              "Schussenrieder Gruppe",
+              "SOB",
+              "Spätneolithikum",
+              "Stichbandkeramik",
+              "Altheimer Gruppe",
+              "Chamer Kultur",
+              "Jungneolithikum"
+            )
+            ,
+            "Neolithikum",
+            "Mesolithikum"
+          )
+        )
+      )
+    )
+  ))
+
+
+data$Epoche <- factor(
+  data$Epoche,
+  ordered = TRUE,
+  levels = c(
+    "Paläolithikum",
+    "Mesolithikum",
+    "Neolithikum",
+    "Bronzezeit",
+    "Hallstattzeit",
+    "Latènezeit"
+  )
+)
+
+```
+
+# Functions to calculate the continuity
+## function to calculate distance and number of settlements
+```{r eval=FALSE}
+dis_count <- function(code_epo) {
+  epo_mean <- NA
+  k <- 0
+  data <- data
+  for (i in 1:nrow(code_epo)) {
+    print(i)
+    code_epo[i - 1, 29] <- mean(epo_mean)
+    code_epo[i - 1, 30] <- k
+    epo_mean <- NA
+    k = 0
+    for (j in 1:nrow(code_epo)) {
+      if (distHaversine(
+        c(code_epo$lng_wgs84[i], code_epo$lat_wgs84[i]),
+        c(code_epo$lng_wgs84[j], code_epo$lat_wgs84[j])
+      ) <= 30000) {
+        epo_mean[k] <-
+          distHaversine(
+            c(code_epo$lng_wgs84[i], code_epo$lat_wgs84[i]),
+            c(code_epo$lng_wgs84[j], code_epo$lat_wgs84[j])
+          )
+        k <- k + 1
+      }
+    }
+  }
+  names(code_epo)[29] <- "distanz"
+  names(code_epo)[30] <- "anzahl"
+  return(code_epo)
+}
+
+```
+## function for coding
+```{r eval=FALSE}
+code <- function(code_epo, df_naechste_Epoche) {
+  vgl_epo <- dplyr::select(code_epo, lng_wgs84, lat_wgs84)
+  vgl_n_epo <-
+    dplyr::select(df_naechste_Epoche, lng_wgs84, lat_wgs84)
+  for (i in 1:nrow(vgl_epo)) {
+    code_epo[i, 31] <- 0
+    print(i)
+    for (j in 1:nrow(vgl_n_epo)) {
+      if (all.equal(vgl_epo[i, ], vgl_n_epo[j, ]) == TRUE) {
+        code_epo[i, 31] <- 1
+      }
+      else{
+        
+      }
+      
+    }
+  }
+  names(code_epo)[31] <- "kodierung"
+  return(code_epo)
+}
+```
+
+
+# Calculation of distance and number of settlements and coding
+```{r eval=FALSE}
+## total computation time: 5h 2min 52sec
+# define settlements
+set_typ <- c(
+  "Abri",
+  "Freilandstation",
+  "Siedlung",
+  "Abschnittsbefestigung",
+  "Höhensiedlung",
+  "Höhensiedlung, befestigt",
+  "Kreisgraben",
+  "Ringwall",
+  "Siedlung, befestigt",
+  "Höhlenfunde"
+)
+```
+
+
+## Palaeolithikum
+```{r eval=FALSE}
+# computation time dis_count: ~ 1 min 23 s
+code_palae <-
+  dplyr::filter(data,
+                Epoche %in% "Paläolithikum" &
+                  Typ %in% set_typ)
+code_palae <- dis_count(code_palae)
+
+Meso <-
+  dplyr::filter(data,
+                Epoche %in% "Mesolithikum" &
+                  Typ %in% set_typ)
+# computation time code: ~ 1h 6min
+code_palae <- code(code_palae, Meso)
+save(code_palae, file = "code_palae.csv")
+```
+
+## Mesolithikum
+```{r eval=FALSE}
+code_meso <-
+  dplyr::filter(data,
+                Epoche %in% "Mesolithikum" &
+                  Typ %in% set_typ)
+# computation time dis_count: ~ 53 s
+code_meso <- dis_count(code_meso)
+neo <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Neolithikum" &
+      Typ %in% set_typ
+  )
+# computation time code: ~ 1h 
+code_meso <- code(code_meso, neo)
+save(code_meso, file = "code_neo.csv")
+```
+
+## Neolithikum
+```{r eval=FALSE}
+code_neo <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Neolithikum" &
+      Typ %in% set_typ
+  )
+# computation time dis_count: ~ 2min 30s
+code_neo <- dis_count(code_neo)
+bronz <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Bronzezeit" &
+      Typ %in% set_typ
+  )
+# computation time code: ~ 1h 48min
+code_neo <- code(code_neo, bronz)
+save(code_neo, file = "code_neo.csv")
+```
+
+
+## Bronzezeit
+```{r eval=FALSE}
+code_bro <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Bronzezeit" &
+      Typ %in% set_typ
+  )
+# computation time dis_count: ~ 2min 22s
+code_bro <- dis_count(code_bro)
+system.time(dis_count(code_bro[1:100,]))
+hall <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Hallstattzeit" &
+      Typ %in% set_typ
+  )
+# computation time code: ~ 37min
+code_bro <- code(code_bro, hall)
+save(code_bro, file = "code_bro.csv")
+load("code_bro.csv")
+```
+
+## Hallstattzeit
+```{r eval=FALSE}
+
+code_hall <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Hallstattzeit" &
+      Typ %in% set_typ
+  )
+# computation time dis_count: ~ 44s
+code_hall <- dis_count(code_hall)
+lat <-
+  dplyr::filter(
+    data,
+    Epoche %in% "Latènezeit" &
+      Typ %in% set_typ
+  )
+# computation time code: ~ 24min
+code_hall <- code(code_hall, lat)
+
+```
+
+
+## Merging
+```{r eval=FALSE}
+conti <-
+  dplyr::bind_rows(code_palae, code_meso, code_neo, code_bro, code_hall)
+
+# record whether all the data has been calculated
+nrow(filter(
+  data,
+  Epoche %in% c(
+    "Hallstattzeit",
+    "Bronzezeit",
+    "Neolithikum",
+    "Mesolithikum",
+    "Paläolithikum"
+  ) &
+    Typ %in% c(
+      "Abri",
+      "Freilandstation",
+      "Siedlung",
+      "Abschnittsbefestigung",
+      "Höhensiedlung",
+      "Höhensiedlung, befestigt",
+      "Kreisgraben",
+      "Ringwall",
+      "Siedlung, befestigt",
+      "Höhlenfunde"
+    )
+)) - nrow(conti)
+# 77 were not recorded
+
+```
+
+# Rasterdata
+## load raster data
+```{r eval=FALSE}
+raster <- stack(
+  c(
+  "Final/Daten/Raster/height_raster.grd",
+  "Final/Daten/Raster/temp_raster.grd",
+  "Final/Daten/Raster/rain_raster.grd",
+  "Final/Daten/Raster/distance_water_raster.grd",
+  "Final/Daten/Raster/distance_loess_raster.grd",
+  "Final/Daten/Raster/frostdays_raster.grd",
+  "Final/Daten/Raster/sunhours_raster.grd",
+  "Final/Daten/Raster/corine_raster.grd",
+  "Final/Daten/Raster/tpi_raster.grd",
+  "Final/Daten/Raster/slope_raster.grd",
+  "Final/Daten/Raster/aspect_raster.grd"
+  )
+  )
+
+```
+
+## change skale of predictors proposal
+```{r eval=FALSE}
+### Height in 100m
+raster[["height"]] <- raster[["height"]] / 100
+### Rain in 100mm
+raster[["rain"]] <- raster[["rain"]] / 100
+### Distance in 1000m/ km
+raster[["distance_water"]] <- raster[["distance_water"]] / 1000
+raster[["distance_loess"]] <- raster[["distance_loess"]] / 1000
+```
+
+## Replace certain parameters in data with raster data
+### Code reduction function
+```{r eval=FALSE}
+extraction <- function(parameter, rasterdata){
+  parameter <-
+  round(raster::extract(raster[[rasterdata]], base::matrix(
+    c(conti$lng_wgs84, conti$lat_wgs84), ncol = 2
+  )), digits = 2)
+return(parameter)
+}
+```
+### height
+```{r eval=FALSE}
+
+conti$Höhe_SRTM1_puffer50m <- extraction(conti$Höhe_SRTM1_puffer50m, "height")
+names(conti)[9] <- "height"
+```
+
+
+### temp
+```{r eval=FALSE}
+conti$Temperatur_Jahr <- extraction(conti$Temperatur_Jahr, "temp")
+names(conti)[25] <- "temp"
+```
+
+### rain
+```{r eval=FALSE}
+conti$Niederschlag_Jahr <- extraction(conti$Niederschlag_Jahr, "temp")
+names(conti)[19] <- "rain"
+```
+
+### distance water
+```{r eval=FALSE}
+conti$Wasser_puffer50m <- extraction(conti$Wasser_puffer50m, "distance_water")
+names(conti)[13] <- "distance_water" 
+
+```
+
+### distance loess
+```{r eval=FALSE}
+conti$Loess_1zu500k_puffer50m <- extraction(conti$Loess_1zu500k_puffer50m, "distance_loess")
+names(conti)[12] <- "distance_loess"
+```
+
+### frostdays
+```{r eval=FALSE}
+conti$Frosttage_Jahr <- extraction(conti$Frosttage_Jahr, "frostdays")
+names(conti)[18] <- "frostdays"
+```
+
+### sunhours
+```{r eval=FALSE}
+conti$Sonnenstunden_Jahr <- extraction(conti$Sonnenstunden_Jahr, "sunhours")
+names(conti)[22] <- "sunhours"
+```
+
+### corine code
+```{r eval=FALSE}
+conti$`Corine-Code` <- extraction(conti$`Corine-Code`, "corine")
+names(conti)[16] <- "corine"
+
+```
+
+#### correcting the corinecode in a rough way
+```{r eval=FALSE}
+
+conti$corine[113 <= conti$corine & conti$corine <= 117] <- 112
+conti$corine[118 <= conti$corine & conti$corine <= 120] <- 121
+conti$corine[125 <= conti$corine & conti$corine <= 127] <- 124
+conti$corine[128 <= conti$corine & conti$corine <= 130] <- 131
+conti$corine[134 <= conti$corine & conti$corine <= 137] <- 133
+conti$corine[138 <= conti$corine & conti$corine <= 140] <- 141
+conti$corine[143 <= conti$corine & conti$corine <= 177] <- 142
+conti$corine[178 <= conti$corine & conti$corine <= 210] <- 211
+conti$corine[212 <= conti$corine & conti$corine <= 216] <- 211
+conti$corine[217 <= conti$corine & conti$corine <= 220] <- 221
+conti$corine[223 <= conti$corine & conti$corine <= 227] <- 222
+conti$corine[228 <= conti$corine & conti$corine <= 230] <- 231
+conti$corine[232 <= conti$corine & conti$corine <= 238] <- 231
+conti$corine[239 <= conti$corine & conti$corine <= 241] <- 242
+conti$corine[244 <= conti$corine & conti$corine <= 277] <- 243
+conti$corine[278 <= conti$corine & conti$corine <= 310] <- 310
+conti$corine[314 <= conti$corine & conti$corine <= 317] <- 313
+conti$corine[318 <= conti$corine & conti$corine <= 320] <- 321
+conti$corine[323 == conti$corine] <- 322
+conti$corine[325 <= conti$corine & conti$corine <= 328] <- 324
+conti$corine[329 <= conti$corine & conti$corine <= 330] <- 331
+conti$corine[336 <= conti$corine & conti$corine <= 373] <- 335
+conti$corine[374 <= conti$corine & conti$corine <= 410] <- 411
+conti$corine[413 <= conti$corine & conti$corine <= 417] <- 412
+conti$corine[418 <= conti$corine & conti$corine <= 420] <- 421
+conti$corine[422 == conti$corine] <- 423
+conti$corine[424 <= conti$corine & conti$corine <= 467] <- 423
+conti$corine[468 <= conti$corine & conti$corine <= 510] <- 511
+conti$corine[513 <= conti$corine & conti$corine <= 517] <- 512
+conti$corine[518 <= conti$corine & conti$corine <= 520] <- 521
+conti$corine[523 <= conti$corine ] <- 523
+```
+
+### slope
+```{r eval=FALSE}
+conti$Neigung_SRTM1_puffer50m <- extraction(conti$Neigung_SRTM1_puffer50m, "slope")
+names(conti)[10] <- "slope"
+```
+
+  
+### aspect
+```{r eval=FALSE}
+conti$Hangausrichtung_SRTM1_puffer50m <- extraction(conti$Hangausrichtung_SRTM1_puffer50m, "aspect")
+names(conti)[11] <- "aspect"
+
+```
+
+### tpi 
+```{r eval=FALSE}
+conti[,32] <- round(raster::extract(raster[["tpi"]], base::matrix(
+  c(conti$lng_wgs84, conti$lat_wgs84), ncol = 2
+)), digits = 2)
+names(conti)[32] <- "tpi"
+
+```
+
+### change the scaling of distance
+```{r eval=FALSE}
+conti$distanz <- conti$distanz/1000
+```
+
+### epochs as a factor
+```{r eval=FALSE}
+conti[which(conti$Epoche == "Paläolithikum"),33] <- 1
+conti[which(conti$Epoche == "Mesolithikum"),33] <- 2
+conti[which(conti$Epoche == "Neolithikum"),33] <- 3
+conti[which(conti$Epoche == "Bronzezeit"),33] <- 4
+conti[which(conti$Epoche == "Hallstattzeit"),33] <- 5
+names(conti)[33] <- "Epochen_num"
+
+```
+
+# Models 
+## load the previously calculated data
+```{r}
+conti <- readRDS(file = "../../Daten/Konti/Konti.RDS")
+```
+
+
+## Continuity for all epochs
+### Model 
+```{r}
+conti <- conti[sample(nrow(conti)), ]
+conti <- na.omit(conti)
+conti_glm <-
+  glm(
+    as.factor(kodierung) ~ (
+      height + slope + aspect + distance_loess + distance_water +
+        Umfeldanalyse_km2 + Reliefenergie  + Viewshed_km2)^2 + as.factor(corine) +
+        (sunhours + temp + frostdays + rain) ^ 2 +
+        distanz + anzahl + tpi + as.factor(Epochen_num) +
+        Umfeldanalyse_km2:Reliefenergie + frostdays:rain + height:rain
+      ,
+      data = conti,
+      family = binomial
+    )
+summary(conti_glm)
+
+```
+
+### Step
+```{r}
+conti_glm_step <- step(conti_glm, direction = "both")
+summary(conti_glm_step)
+
+
+
+# Select the wald test significant parameters
+# fitting another glm with the significant parameters
+conti_glm <-
+  glm(
+    as.factor(kodierung) ~ 
+      height + aspect + distance_loess + distance_water +
+        Umfeldanalyse_km2 + Reliefenergie  + Viewshed_km2 +
+      sunhours + temp + frostdays + rain +
+      distanz + anzahl + as.factor(Epochen_num) +
+      height:Viewshed_km2 + slope:distance_loess + distance_loess:Umfeldanalyse_km2 +
+      distance_water:Umfeldanalyse_km2 + Umfeldanalyse_km2:Reliefenergie + sunhours:temp +
+      frostdays:rain + height:rain
+    ,
+    data = conti,
+    family = binomial
+  )
+summary(conti_glm)
+
+# Step
+conti_glm_step <- step(conti_glm, direction = "both")
+summary(conti_glm_step)
+
+# ... after fitting the model in this way 4 more times:
+# last time fitting the model 
+conti_glm <-
+  glm(
+    as.factor(kodierung) ~ height + distance_water + 
+      Umfeldanalyse_km2 + Reliefenergie + frostdays + rain + distanz + 
+      anzahl + as.factor(Epochen_num) + Umfeldanalyse_km2:Reliefenergie + 
+      height:rain,
+    family = binomial,
+    data = conti
+  )
+summary(conti_glm)
+
+# Step
+conti_glm_step <- step(conti_glm, direction = "both")
+summary(conti_glm_step)
+# Step function no longer throws out parameters
+# cor(conti$Umfeldanalyse_km2,conti$Reliefenergie) = -0.75325
+# cor(conti$height, conti$rain) = 0.52783
+```
+
+### KI for the coefficients
+```{r}
+confint(conti_glm)
+```
+
+### ROC
+```{r}
+
+par(mar = c(4.5,3.5,3.5,1.5)+0.1)
+rocplot(conti_glm)+
+  ggtitle("ROC for the continuity of all epochs")+
+  xlab("False positive rate")+
+  ylab("True positive rate")
+#dev.copy(png, "../../Output/Konti/conit_ROC.png", res = 200, pointsize = 16, units = "in", width = 14, height = 10)
+#dev.off()
+
+```
+
+### Residual
+```{r}
+conti_glm <- na.omit(conti_glm)
+conti_glm_aug <- augment(conti_glm) %>%
+  mutate(index = 1:n()) 
+names(conti_glm_aug)[1] <- "Kodierung" 
+par(mar = c(4.5,3.5,3.5,1.5)+0.1)
+ggplot(conti_glm_aug, aes(index, .std.resid)) +
+  geom_point(aes(color = Kodierung), alpha = .5) +
+  ylim(-2, 2)+
+  guides(colour = guide_legend(reverse=T))
+#dev.copy(png, "../../Output/Konti/conti_res.png", res = 200, pointsize = 16, units = "in", width = 14, height = 10)
+#dev.off()
+```
+### Probabilities
+```{r}
+prob_conti <- predict(conti_glm)
+prob_conti <- exp(prob_conti)/(1+ exp(prob_conti))
+summary(prob_conti)
+```
+## Continuity for Hallstattzeit
+```{r}
+hall <- dplyr::filter(conti, Epoche %in% "Hallstattzeit")
+hall <- na.omit(hall)
+hall <- hall[sample(nrow(hall)), ]
+hall_glm <-
+  glm(
+    as.factor(kodierung) ~ (
+      height + slope + aspect + distance_loess + distance_water +
+        Umfeldanalyse_km2 + Reliefenergie  + Viewshed_km2)^2 + as.factor(corine) +
+      (sunhours + temp + frostdays + rain) ^ 2 +
+      distanz + anzahl + tpi + as.factor(Epochen_num) +
+      Umfeldanalyse_km2:Reliefenergie + frostdays:rain + height:rain
+    ,
+    data = conti,
+    family = binomial
+  )
+
+summary(hall_glm)
+
+```
+
+### Step
+```{r}
+hall_glm_step <- step(na.omit(hall_glm), direction = "both")
+summary(hall_glm_step)
+# ... after fitting the model as in the upper part 3 more times:
+hall_glm <- glm(as.factor(kodierung) ~ height + distance_loess + 
+                  distance_water + Umfeldanalyse_km2 + Reliefenergie + frostdays + 
+                  rain + distanz + anzahl + Umfeldanalyse_km2:Reliefenergie + 
+                  frostdays:rain + height:rain, family = binomial, data = conti)
+summary(hall_glm)
+
+# Step
+hall_glm_step <- step(na.omit(hall_glm), direction = "both")
+summary(hall_glm_step)
+# Step function no longer throws out parameters
+# cor(hall$Umfeldanalyse_km2, hall$Reliefenergie) = -0.79125
+# cor(hall$frostdays, hall$rain) = 0.57090
+# cor(hall$height, hall$rain) = 0.66013
+
+
+```
+
+### KI for the coefficients
+```{r}
+confint(hall_glm)
+```
+
+### ROC
+
+```{r}
+# ROC
+par(mar = c(4.5,3.5,3.5,1.5)+0.1)
+rocplot(hall_glm) +
+  ggtitle("ROC for the continuity glm of the hallstatt period") +
+  xlab("False positive rate") +
+  ylab("True positive rate")
+#dev.copy(png, "../../Output/Konti/hall_ROC.png", res = 200, pointsize = 16, units = "in", width = 14, height = 10)
+#dev.off()
+```
+
+
+
+### Residuals
+```{r}
+### Residuals
+hall_glm <- na.omit(hall_glm)
+hall_glm_aug <- augment(hall_glm) %>%
+  mutate(index = 1:n()) 
+names(hall_glm_aug)[1] <- "Kodierung"
+par(mar = c(4.5,3.5,3.5,1.5)+0.1)
+ggplot(hall_glm_aug, aes(index, .resid)) +
+  geom_point(aes(color = Kodierung), alpha = .5) +
+  theme_bw() +
+  ylim(-2, 2)+
+  guides(colour = guide_legend(reverse=T))
+#dev.copy(png, "../../Output/Konti/hall_res.png", res = 200, pointsize = 16, units = "in", width = 14, height = 10)
+#dev.off()
+```
+
+### Probabilities
+```{r}
+prob_hall <- predict(hall_glm)
+prob_hall <- exp(prob_hall)/(1+ exp(prob_hall))
+summary(prob_hall)
+```

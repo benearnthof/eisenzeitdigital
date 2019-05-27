@@ -1,0 +1,99 @@
+   ***********************************************************************
+   *                       Package   GWmodel                             *
+   ***********************************************************************
+   Program starts at: 2019-05-19 20:28:42 
+   Call:
+   GWmodel::ggwr.basic(formula = model_formula, data = df_siedlung_gwglm, 
+    bw = bestBW_siedlung, family = "binomial", kernel = "gaussian", 
+    cv = FALSE, maxiter = 25, dMat = dMat_siedlung)
+
+   Dependent (y) variable:  site
+   Independent variables:  height temp rain distance_water distance_loess frostdays slope
+   Number of data points: 8382
+   Used family: binomial
+   ***********************************************************************
+   *              Results of Generalized linear Regression               *
+   ***********************************************************************
+
+Call:
+NULL
+
+Deviance Residuals: 
+   Min      1Q  Median      3Q     Max  
+   -35      -1       1       1   24384  
+
+Coefficients:
+                 Estimate Std. Error z value
+Intercept      -16.001756   1.746832   -9.16
+height           0.347435   0.244962    1.42
+temp             1.681507   0.130175   12.92
+rain            -0.001984   0.001277   -1.55
+distance_water  -0.098847   0.010436   -9.47
+distance_loess  -0.103358   0.005099  -20.27
+frostdays        0.733528   0.068834   10.66
+slope           -0.127556   0.026326   -4.85
+height:rain     -0.000830   0.000285   -2.91
+                           Pr(>|z|)    
+Intercept      < 0.0000000000000002 ***
+height                       0.1561    
+temp           < 0.0000000000000002 ***
+rain                         0.1202    
+distance_water < 0.0000000000000002 ***
+distance_loess < 0.0000000000000002 ***
+frostdays      < 0.0000000000000002 ***
+slope                     0.0000013 ***
+height:rain                  0.0036 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 11619.2  on 8381  degrees of freedom
+Residual deviance:  7692.7  on 8373  degrees of freedom
+AIC: 7711
+
+Number of Fisher Scoring iterations: 7
+
+
+ AICc:  7710.7
+ Pseudo R-square value:  0.33793
+   ***********************************************************************
+   *          Results of Geographically Weighted Regression              *
+   ***********************************************************************
+
+   *********************Model calibration information*********************
+   Kernel function: gaussian 
+   Fixed bandwidth: 0.10546 
+   Regression points: the same locations as observations are used.
+   Distance metric: A distance matrix is specified for this model calibration.
+
+   ************Summary of Generalized GWR coefficient estimates:**********
+                           Min.       1st Qu.        Median
+   Intercept      -544972.83612    -109.73616      -3.93322
+   height            -156.66182     -23.26956      -4.17292
+   temp              -578.25371      -2.50606       1.29113
+   rain                -0.61198      -0.12568      -0.00360
+   distance_water    -314.24857      -0.26754      -0.04902
+   distance_loess     -19.98641      -0.40610      -0.14543
+   frostdays          -11.50393      -1.37598      -0.22678
+   slope               -1.93902       0.02962       0.39383
+   height.rain        -84.80235      -0.01637       0.00312
+                        3rd Qu.     Max.
+   Intercept          107.31835   629.18
+   height              12.32406 93653.78
+   temp                 4.86786    30.06
+   rain                 0.11528   489.87
+   distance_water       0.10819     3.61
+   distance_loess       0.02256     2.92
+   frostdays            1.09020   539.62
+   slope                0.80200   219.29
+   height.rain          0.02668     0.13
+   ************************Diagnostic information*************************
+   Number of data points: 8382 
+   GW Deviance: NaN 
+   AIC : NaN 
+   AICc : NaN 
+   Pseudo R-square value:  NaN 
+
+   ***********************************************************************
+   Program stops at: 2019-05-19 20:33:39 

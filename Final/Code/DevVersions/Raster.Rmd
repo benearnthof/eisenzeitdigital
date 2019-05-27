@@ -1,0 +1,369 @@
+---
+title: "Generation of Environmental Raster Data"
+author: "EZD Team"
+date: "20 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 14, dpi = 300)
+
+# Load Packages
+library(dismo)
+library(raster)
+library(dplyr)
+library(maptools)
+library(rgdal)
+library(stringr)
+```
+
+# Raster Data
+
+## Raster for Bavaria
+
+- Extract Bavaria Shape from Spatial Germany
+```{r eval=FALSE}
+ger_file <- getData("GADM", country = "Germany", level = 1)
+bay_file <- ger_file[match(toupper("Bayern"),toupper(ger_file$NAME_1)),]
+```
+
+- Create a Random Raster Over the Space    
+```{r eval=FALSE}
+bay_raster <- raster(xmn = 8.975, xmx = 13.84167, ymn = 47.26667, ymx = 50.56667, nrow = 396, ncol = 584)
+bay_raster[] <- runif(396*584)
+```
+
+- Create Mask
+```{r eval=FALSE}
+bay_mask <- mask(bay_raster, bay_file)
+```
+
+## Data Acquisition
+
+### Height
+
+- Load Data
+```{r eval=FALSE}
+height <- getData(name = "alt", country = "Germany")
+```
+
+- Change Layer Name
+```{r eval=FALSE}
+names(height) <- "height"
+```
+
+- Cut Bavaria Shape
+```{r eval=FALSE}
+height <- crop(height, bay_mask)
+height <- mask(height, bay_mask)
+```
+
+- Save Raster
+```{r eval=FALSE}
+writeRaster(height, "../../Daten/Raster/height_raster")
+```
+
+### Temperature and Rain
+
+- Load Data
+```{r eval=FALSE}
+weatherdata <- getData("worldclim", var = "bio", res = 0.5, lon =  12.101624, lat = 49.013432)
+weatherdata <- weatherdata[[c(1, 12)]]
+```
+
+- Change Name
+```{r eval=FALSE}
+names(weatherdata) <- c("temp", "rain")
+```
+
+- Cut Bavaria Shape
+```{r eval=FALSE}
+weatherdata <- crop(weatherdata, bay_mask)
+weatherdata <- mask(weatherdata, bay_mask)
+weatherdata <- stack(weatherdata[[1]] / 10, weatherdata[[2]])
+```
+
+- Save Raster
+```{r eval=FALSE}
+writeRaster(weatherdata[[1]], "../../Daten/Raster/temp_raster")
+writeRaster(weatherdata[[2]], "../../Daten/Raster/rain_raster")
+```
+
+### Slope, Aspect, Tpi
+
+- Load Data
+```{r eval=FALSE}
+env_data <- terrain(height, opt = c("slope", "aspect", "tpi"), unit = "degrees")
+```
+
+- Turn into Cathegorial Variable
+```{r eval=FALSE}
+env_data$aspect <- ceiling((env_data$aspect + 360/8/2)/(360/8))
+env_data$aspect[env_data$aspect > 8] <- 1
+```
+
+- Cut Bavaria Shape
+```{r eval=FALSE}
+env_data <- crop(env_data, bay_mask)
+env_data <- mask(env_data, bay_mask)
+```
+
+- Save Raster
+```{r eval=FALSE}
+writeRaster(env_data[[1]], "../../Daten/Raster/tpi_raster")
+writeRaster(env_data[[2]], "../../Daten/Raster/slope_raster")
+writeRaster(env_data[[3]], "../../Daten/Raster/aspect_raster")
+```
+
+### Water Distance
+(Source: s. Bene)
+
+- Load Shapefiles
+```{r eval=FALSE}
+river_shape <- shapefile("../../Daten/Raster/RawFiles/DEU_water_lines_dcw.shx")
+lake_shape <- shapefile("../../Daten/Raster/RawFiles/DEU_water_areas_dcw.shx")
+```
+
+- Create Water Rasters
+```{r eval=FALSE}
+river_raster <- mask(bay_raster, river_shape)
+lake_raster <- mask(bay_raster, lake_shape)
+```
+
+- Calculate Distance to Rivers and Lakes
+```{r eval=FALSE}
+distance_river <- distance(river_raster)
+distance_lake <- distance(lake_raster)
+```
+
+- Minimum of Distance to Rivers and Distance to Lakes is Distance to Water
+```{r eval=FALSE}
+distance_water <- min(distance_lake, distance_river)
+```
+
+- Save Raster Files
+```{r eval=FALSE}
+writeRaster(distance_river, "../../Daten/Raster/RawFiles/river")
+writeRaster(distance_lake, "../../Daten/Raster/RawFiles/lake")
+writeRaster(distance_water, "../../Daten/Raster/RawFiles/water")
+```
+
+- Change Name
+```{r eval=FALSE}
+names(distance_water) <- "distance_water"
+```
+
+- Cut Bavaria Shape
+```{r eval=FALSE}
+distance_water <- mask(distance_water, bay_mask)
+```
+
+- Save Raster
+```{r eval=FALSE}
+writeRaster(distance_water, "../../Daten/Raster/distance_water_raster")
+```
+
+### Loess Distance
+(Source: https://www.lfu.bayern.de/umweltdaten/geodatendienste/pretty_downloaddienst.htm?dld=gk500)
+
+- Load Shapefiles
+```{r eval=FALSE}
+loess_shape <- shapefile("../../Daten/Raster/RawFiles/Loess/gk500_haupteinheiten_epsg4258.shx")
+```
+
+- Subsetting for Loess
+```{r eval=FALSE}
+loess_shape <- loess_shape[str_detect(loess_shape$kurztext, "Löß"),]
+```
+
+- Create Loess Raster
+```{r eval=FALSE}
+loess_raster <- mask(bay_raster, loess_shape)
+```
+
+- Calculate Distance to Loess Sediments
+```{r eval=FALSE}
+distance_loess <- raster::distance(loess_raster)
+```
+
+- Change Name
+```{r eval=FALSE}
+names(distance_loess) <- "distance_loess"
+```
+
+- Save Raster File
+```{r eval=FALSE}
+writeRaster(distance_loess, "../../Daten/Raster/RawFiles/loess")
+```
+
+- Cut Bavaria Shape
+```{r eval=FALSE}
+distance_loess <- mask(distance_loess, bay_mask)
+```
+
+- Save Final Raster
+```{r eval=FALSE}
+writeRaster(distance_loess, "../../Daten/Raster/distance_loess_raster")
+```
+
+### Frostdays
+(Source: https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0)
+
+- Import Data
+```{r eval=FALSE}
+frostdays <- raster("../../Daten/Raster/RawFiles/dwd-Frostdays_annual_map_normals_1971_30.tif")
+```
+
+- Change Name
+```{r eval=FALSE}
+names(frostdays) <- "frostdays"
+```
+
+- Change Coordinates to WGS
+```{r eval=FALSE}
+frostdays <- projectRaster(frostdays, crs = crs(bay_mask))
+```
+
+- Data in Bavaria Shape
+```{r eval=FALSE}
+frostdays <- resample(frostdays, bay_mask)
+frostdays <- mask(frostdays, bay_mask)
+```
+
+- Save Final Raster
+```{r eval=FALSE}
+writeRaster(frostdays, "../../Daten/Raster/frostdays_raster")
+```
+
+- Load Final Raster
+```{r eval=FALSE}
+# frostdays <- raster("../../Daten/Raster/frostdays_raster.grd")
+```
+
+
+### Sunhours
+(Source: https://maps.dwd.de/geoserver/web/wicket/bookmarkable/org.geoserver.web.demo.MapPreviewPage?0)
+
+- Import Data 
+```{r eval=FALSE}
+sunhours <- raster("../../Daten/Raster/RawFiles/dwd-SDMS_17_1971_30.tif")
+```
+
+- Change Name
+```{r eval=FALSE}
+names(sunhours) <- "sunhours"
+```
+
+- Change Coordinates to WGS
+```{r eval=FALSE}
+sunhours <- projectRaster(sunhours, crs = crs(bay_mask))
+```
+
+- Data in Bavaria Shape
+```{r eval=FALSE}
+sunhours <- resample(sunhours, bay_mask)
+sunhours <- mask(sunhours, bay_mask)
+```
+
+- Save Final Raster
+```{r eval=FALSE}
+writeRaster(sunhours, "../../Daten/Raster/sunhours_raster")
+```
+
+- Load Final Raster
+```{r eval=FALSE}
+# sunhours <- raster("../../Daten/Raster/sunhours_raster.grd")
+```
+
+### Corine
+(Source: https://land.copernicus.eu/pan-european/corine-land-cover/clc2018?tab=download)
+
+- Import Data
+```{r eval=FALSE}
+corine <- raster("../../Daten/Raster/RawFiles/CLC2012_CLC2006_V2018_20b2.tif")
+```
+
+- Change Name
+```{r eval=FALSE}
+names(corine) <- "corine"
+```
+
+- Change Coordinates to WGS
+```{r eval=FALSE}
+corine <- projectRaster(corine, bay_mask)
+```
+
+- Save Raster File
+```{r eval=FALSE}
+writeRaster(corine, "../../Daten/Raster/RawFiles/corine")
+```
+
+- Data in Bavaria Shape
+```{r eval=FALSE}
+corine <-  mask(corine, bay_mask)
+```
+
+- Save Final Raster
+```{r eval=FALSE}
+writeRaster(corine, "../../Daten/Raster/corine_raster")
+```
+
+## Stack File with Raster Data
+
+- Load all Predictors
+```{r}
+predictors <- stack(c(
+  "../../Daten/Raster/height_raster.grd",
+  "../../Daten/Raster/temp_raster.grd",
+  "../../Daten/Raster/rain_raster.grd",
+  "../../Daten/Raster/distance_water_raster.grd",
+  "../../Daten/Raster/distance_loess_raster.grd",
+  "../../Daten/Raster/frostdays_raster.grd",
+  "../../Daten/Raster/sunhours_raster.grd",
+  "../../Daten/Raster/corine_raster.grd",
+  "../../Daten/Raster/tpi_raster.grd",
+  "../../Daten/Raster/slope_raster.grd",
+  "../../Daten/Raster/aspect_raster.grd"))
+```
+
+- Transformed Stack
+```{r}
+predictors <- stack(c(
+  predictors[[1]]/100,
+  predictors[[2]],
+  predictors[[3]],
+  predictors[[4]]/1000,
+  predictors[[5]]/1000,
+  predictors[[6]],
+  predictors[[7]],
+  predictors[[8]],
+  predictors[[9]],
+  predictors[[10]],
+  predictors[[11]]
+  ))
+```
+
+- Plot Rasters
+```{r}
+plot(predictors[[1]], main = "height")
+plot(predictors[[2]], main = "temp")
+plot(predictors[[3]], main = "rain")
+plot(predictors[[4]], main = "distance_water")
+plot(predictors[[5]], main = "distance_loess")
+plot(predictors[[6]], main = "frostdays")
+plot(predictors[[7]], main = "sunhours")
+plot(predictors[[8]], main = "corine")
+plot(predictors[[9]], main = "tpi")
+plot(predictors[[10]], main = "slope")
+plot(predictors[[11]], main = "aspect")
+```
+

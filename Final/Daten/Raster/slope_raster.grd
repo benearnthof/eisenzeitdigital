@@ -1,0 +1,26 @@
+[general]
+creator=R package 'raster'
+created=2019-05-03 20:23:32
+[georeference]
+nrows=396
+ncols=584
+xmin=8.975
+ymin=47.2666666666667
+xmax=13.8416666666667
+ymax=50.5666666666667
+projection=+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0
+[data]
+datatype=FLT4S
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=FALSE
+minvalue=0
+maxvalue=32.8599027383249
+nodatavalue=-3.4e+38
+[legend]
+legendtype=
+values=
+color=
+[description]
+layername=slope

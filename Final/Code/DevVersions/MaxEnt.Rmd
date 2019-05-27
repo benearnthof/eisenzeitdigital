@@ -1,0 +1,256 @@
+---
+title: "Generation of Environmental Raster Data"
+author: "EZD Team"
+date: "20 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r}
+'Evtl adden:
+density(eval_maxent_v) etc
+
+
+'
+
+```
+
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 14, dpi = 300)
+
+# Load Packages
+library(dismo)
+library(raster)
+library(dplyr)
+```
+
+
+# DELETE
+```{r}
+predictors <- stack(c(
+  "../../Daten/Raster/height_raster.grd",
+  "../../Daten/Raster/temp_raster.grd",
+  "../../Daten/Raster/rain_raster.grd",
+  "../../Daten/Raster/distance_water_raster.grd",
+  "../../Daten/Raster/distance_loess_raster.grd",
+  "../../Daten/Raster/frostdays_raster.grd",
+  "../../Daten/Raster/sunhours_raster.grd",
+  "../../Daten/Raster/corine_raster.grd",
+  "../../Daten/Raster/tpi_raster.grd",
+  "../../Daten/Raster/slope_raster.grd",
+  "../../Daten/Raster/aspect_raster.grd"))
+
+predictors <- stack(c(
+  predictors[[1]]/100,
+  predictors[[2]],
+  predictors[[3]],
+  predictors[[4]]/1000,
+  predictors[[5]]/1000,
+  predictors[[6]],
+  predictors[[7]],
+  predictors[[8]],
+  predictors[[9]],
+  predictors[[10]],
+  predictors[[11]]
+  ))
+```
+
+
+
+
+
+# MaxEnt
+
+## Presence Data
+
+- Load Data and Change Coordinates to Numeric
+```{r}
+presence <- readRDS("../../Daten/Daten_mit_Epoche.RDS")
+presence$lng_wgs84 <- as.numeric(as.character(presence$lng_wgs84))
+presence$lat_wgs84 <- as.numeric(as.character(presence$lat_wgs84))
+```
+
+- Filter for Eisenzeit and Type and Select Coordinates
+```{r}
+# All Types
+presence_all <- filter(presence, Epoche %in% c("Latènezeit", "Hallstattzeit"))
+presence_all <- presence_all[6:7]
+
+# Siedlung
+presence_s <- filter(presence, Siedlung == TRUE)
+presence_s <- presence_s[6:7]
+
+# Viereckschanze
+presence_v <- filter(presence, Typ == "Viereckschanze")
+presence_v <- presence_v[6:7]
+```
+
+## Preparation for MaxEnt
+
+- Split into Training and Testing Set
+```{r}
+set.seed(12345)
+
+# All Types
+group <- kfold(presence_all, 5)
+presence_train_all <- presence_all[group != 1, ]
+presence_test_all <- presence_all[group == 1, ]
+
+# Siedlung
+group <- kfold(presence_s, 5)
+presence_train_s <- presence_s[group != 1, ]
+presence_test_s <- presence_s[group == 1, ]
+
+# Viereckschanze
+group <- kfold(presence_v, 5)
+presence_train_v <- presence_v[group != 1, ]
+presence_test_v <- presence_v[group == 1, ]
+```
+
+## MaxEnt Model
+
+### All Types
+
+- Fit Model
+```{r}
+model_maxent_all <- maxent(predictors, presence_train_all,
+                           factors = c("corine", "aspect"), 
+                           nbg = nrow(presence_train_all), remove.duplicates = T, 
+                           args = c("responsecurves"))#,
+                           #path = "Maxent")
+```
+
+- Variable Importance
+```{r}
+plot(model_maxent_all)
+```
+
+- Density
+```{r}
+#density(model_maxent_all)
+```
+
+- Response Curve
+```{r}
+response(model_maxent_all)
+```
+
+- Prediction
+```{r}
+pred_maxent_all <- predict(model_maxent_all, predictors)
+plot(pred_maxent_all)
+print(pred_maxent_all)
+```
+
+- Evaluation
+```{r}
+bg <- randomPoints(predictors, nrow(presence_test_all))
+eval_maxent_all <- evaluate(model_maxent_all, p = presence_test_all, a = bg, x = predictors)
+threshold(eval_maxent_all)
+plot(eval_maxent_all, "ROC")
+boxplot(eval_maxent_all)
+print(eval_maxent_all)
+```
+
+### Siedlung
+
+- Fit Model
+```{r}
+model_maxent_s <- maxent(predictors, presence_train_s,
+                           factors = c("corine", "aspect"), 
+                           nbg = nrow(presence_train_s), remove.duplicates = T, 
+                           args = c("responsecurves"))#,
+                           #path = "Maxent")
+```
+
+- Variable Importance
+```{r}
+plot(model_maxent_s)
+```
+
+- Density
+```{r}
+#density(model_maxent_s)
+```
+
+- Response Curve
+```{r}
+response(model_maxent_s)
+```
+
+- Prediction
+```{r}
+pred_maxent_s <- predict(model_maxent_s, predictors)
+plot(pred_maxent_s)
+print(pred_maxent_s)
+```
+
+- Evaluation
+```{r}
+bg <- randomPoints(predictors, nrow(presence_test_s))
+eval_maxent_s <- evaluate(model_maxent_s, p = presence_test_s, a = bg, x = predictors)
+threshold(eval_maxent_s)
+plot(eval_maxent_s, "ROC")
+boxplot(eval_maxent_s)
+print(eval_maxent_s)
+```
+
+### Viereckschanze
+
+- Fit Model
+```{r}
+model_maxent_v <- maxent(predictors, presence_train_v,
+                           factors = c("corine", "aspect"), 
+                           nbg = nrow(presence_train_v), remove.duplicates = T, 
+                           args = c("responsecurves"))#,
+                           #path = "Maxent")
+```
+
+- Variable Importance
+```{r}
+plot(model_maxent_v)
+```
+
+- Density
+```{r}
+#density(model_maxent_v)
+```
+
+- Response Curve
+```{r}
+response(model_maxent_v)
+```
+
+- Prediction
+```{r}
+pred_maxent_v <- predict(model_maxent_v, predictors)
+plot(pred_maxent_v)
+print(pred_maxent_v)
+```
+
+- Evaluation
+```{r}
+bg <- randomPoints(predictors, nrow(presence_test_v))
+eval_maxent_v <- evaluate(model_maxent_v, p = presence_test_v, a = bg, x = predictors)
+threshold(eval_maxent_v)
+plot(eval_maxent_v, "ROC")
+boxplot(eval_maxent_v)
+print(eval_maxent_v)
+```
+
+
+
+
+
+
+

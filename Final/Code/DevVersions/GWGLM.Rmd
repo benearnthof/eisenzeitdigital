@@ -1,0 +1,258 @@
+---
+title: "GWGLM"
+author: "EZD Team"
+date: "20 May 2019"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 14, dpi = 300)
+library(GWmodel)
+library(ggplot2)
+library(sp)
+```
+
+
+# Data Acquisition
+The model needs a spatial point data frame. Hence, the data frame is transformed into spatial point data frames using the package 'sp'.
+```{r}
+# Data for all Fundstellen ====
+df_all <- readRDS("Daten/df_all.RDS")
+sp::coordinates(df_all) <- c("lon", "lat")
+sp::proj4string(df_all) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# Data for Siedlungen only ====
+df_siedlung <- readRDS("Daten/df_siedlung.RDS")
+sp::coordinates(df_siedlung) <- c("lon", "lat")
+sp::proj4string(df_siedlung) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# Data for Viereckschanzen only ====
+df_viereckschanze <- readRDS("Daten/df_viereckschanze.RDS")
+sp::coordinates(df_viereckschanze) <- c("lon", "lat")
+sp::proj4string(df_viereckschanze) <- sp::CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
+```
+
+# The GWGLM Model
+
+```{r, eval = FALSE}
+# Set the model formula with selected variables ====
+model_formula <- site ~ height + 
+                          temp + 
+                          rain + 
+                          distance_water + 
+                          distance_loess + 
+                          frostdays + 
+                          slope
+
+# Set the distance matrix for each type ====
+dMat_all <- GWmodel::gw.dist(rp.locat = df_all@coords, dp.locat = df_all@coords)
+dMat_siedlung <- GWmodel::gw.dist(rp.locat = df_siedlung@coords, dp.locat = df_siedlung@coords)
+dMat_viereckschanze <- GWmodel::gw.dist(rp.locat = df_viereckschanze@coords, dp.locat = df_viereckschanze@coords)
+
+# Select the best bandwidth size for each type ====
+bestBW_all <- GWmodel::bw.ggwr(model_formula, 
+                                     data = df_all, family = "binomial", kernel = "gaussian", approach = "AICc")
+bestBW_siedlung <- GWmodel::bw.ggwr(model_formula, 
+                                     data = df_siedlung, family = "binomial", kernel = "gaussian", approach = "AICc")
+bestBW_viereckschanze <- GWmodel::bw.ggwr(model_formula, 
+                                     data = df_viereckschanze, family = "binomial", kernel = "gaussian", approach = "AICc")
+
+# Run a logistic geographically weighted generalized linear model for each type ====
+modelGGWR_all <- GWmodel::ggwr.basic(model_formula, 
+                                           data = df_all, family = "binomial",
+                                           bw = bestBW_all, 
+                                           dMat = dMat_all, maxiter = 25, kernel = "gaussian", cv = FALSE)
+modelGGWR_all
+
+modelGGWR_siedlung <- GWmodel::ggwr.basic(model_formula, 
+                                           data = df_siedlung, family = "binomial",
+                                           bw = bestBW_siedlung, 
+                                           dMat = dMat_siedlung, maxiter = 25, kernel = "gaussian", cv = FALSE)
+modelGGWR_siedlung
+
+modelGGWR_vieresckschanze <- GWmodel::ggwr.basic(model_formula, 
+                                           data = df_viereckschanze, family = "binomial",
+                                           bw = bestBW_viereckschanze, 
+                                           dMat = dMat_viereckschanze, maxiter = 25, kernel = "gaussian", cv = FALSE)
+modelGGWR_vieresckschanze
+```
+
+
+# Plots
+
+## Preparation for the plots 
+```{r,eval=FALSE}
+# Coefficient Acquisition for each type ====
+Coeffs_all <- data.frame(df_all@data, df_all@coords, 
+                         Coef_slope = modelGGWR_all$SDF$slope,
+                         Coef_height = modelGGWR_all$SDF$height,
+                         Coef_temp = modelGGWR_all$SDF$temp,
+                         Coef_rain = modelGGWR_all$SDF$rain,
+                         Coef_distance_water = modelGGWR_all$SDF$distance_water,
+                         Coef_distance_loess = modelGGWR_all$SDF$distance_loess,
+                         Coef_frostdays = modelGGWR_all$SDF$frostdays)
+
+Coeffs_siedlung <- data.frame(df_siedlung@data, df_siedlung@coords, 
+                         Coef_slope = modelGGWR_siedlung$SDF$slope,
+                         Coef_height = modelGGWR_siedlung$SDF$height,
+                         Coef_temp = modelGGWR_siedlung$SDF$temp,
+                         Coef_rain = modelGGWR_siedlung$SDF$rain,
+                         Coef_distance_water = modelGGWR_siedlung$SDF$distance_water,
+                         Coef_distance_loess = modelGGWR_siedlung$SDF$distance_loess,
+                         Coef_frostdays = modelGGWR_siedlung$SDF$frostdays)
+
+Coeffs_viereckschanze <- data.frame(df_viereckschanze@data, df_viereckschanze@coords, 
+                         Coef_slope = modelGGWR_viereckschanze$SDF$slope,
+                         Coef_height = modelGGWR_viereckschanze$SDF$height,
+                         Coef_temp = modelGGWR_viereckschanze$SDF$temp,
+                         Coef_rain = modelGGWR_viereckschanze$SDF$rain,
+                         Coef_distance_water = modelGGWR_viereckschanze$SDF$distance_water,
+                         Coef_distance_loess = modelGGWR_viereckschanze$SDF$distance_loess,
+                         Coef_frostdays = modelGGWR_viereckschanze$SDF$frostdays)
+
+
+# Creating a function to plot results faster ====
+#' Title
+#'
+#' @param data A data frame that contains all Coefficient Values and the coordinates
+#' @param variable A character string indicating the variable name the plot should be made for
+#'
+#' @return A location plot indicating the different coefficient values for each coordinate
+#' @export
+#'
+#' @examples
+GGWRplot <- function(data, variable) {
+  
+  # plot coordinates
+  ggplot(data, aes(x=lon,y=lat))+
+    
+    # colour the points by the value of the coefficient
+    geom_point(aes(colour=exp(data[, paste("Coef_", variable, sep = "")])), size = 0.6)+
+    
+    # selecting the colour
+    scale_colour_gradient2(low = "#E6E402FF", mid = "#F2F2F2FF", high = "#00A600FF",midpoint = 1, space = "hex", na.value = "grey50", guide = "colourbar", guide_legend(title="exp(β)"))+
+    theme(
+  panel.background = element_rect(fill = "darkgrey", colour = "black",
+                                size = 2, linetype = "solid"),
+  
+  # Hide panel borders and remove grid lines
+  panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Change axis line
+  axis.line = element_line(colour = "black")
+  )+
+    
+    # make a title
+    ggtitle(paste(variable, unlist(strsplit(deparse(substitute(data)), "_"))[2], sep = "_"))
+}
+```
+
+## Actual Plots
+
+```{r,eval=FALSE}
+# All
+
+# height
+GGWRplot(Coeffs_all, "height")
+dev.copy(png, "Output/GWGLM/All/height_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# temp
+GGWRplot(Coeffs_all, "temp")
+dev.copy(png, "Output/GWGLM/All/temp_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# rain
+GGWRplot(Coeffs_all, "rain")
+dev.copy(png, "Output/GWGLM/All/rain_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_water
+GGWRplot(Coeffs_all, "distance_water")
+dev.copy(png, "Output/GWGLM/All/distance_water_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_loess
+GGWRplot(Coeffs_all, "distance_loess")
+dev.copy(png, "Output/GWGLM/All/distance_loess_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# frostdays
+GGWRplot(Coeffs_all, "frostdays")
+dev.copy(png, "Output/GWGLM/All/frostdays_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# slope
+GGWRplot(Coeffs_all, "slope")
+dev.copy(png, "Output/GWGLM/All/slope_all.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+
+
+# Siedlung
+
+# height
+GGWRplot(Coeffs_siedlung, "height")
+dev.copy(png, "Output/GWGLM/Siedlung/height_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# temp
+GGWRplot(Coeffs_siedlung, "temp")
+dev.copy(png, "Output/GWGLM/Siedlung/temp_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# rain
+GGWRplot(Coeffs_siedlung, "rain")
+dev.copy(png, "Output/GWGLM/Siedlung/rain_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_water
+GGWRplot(Coeffs_siedlung, "distance_water")
+dev.copy(png, "Output/GWGLM/Siedlung/distance_water_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_loess
+GGWRplot(Coeffs_siedlung, "distance_loess")
+dev.copy(png, "Output/GWGLM/Siedlung/distance_loess_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# frostdays
+GGWRplot(Coeffs_siedlung, "frostdays")
+dev.copy(png, "Output/GWGLM/Siedlung/frostdays_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# slope
+GGWRplot(Coeffs_siedlung, "slope")
+dev.copy(png, "Output/GWGLM/Siedlung/slope_siedlung.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+
+# Viereckschanze
+
+# height
+GGWRplot(Coeffs_viereckschanze, "height")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/height_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# temp
+GGWRplot(Coeffs_viereckschanze, "temp")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/temp_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# rain
+GGWRplot(Coeffs_viereckschanze, "rain")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/rain_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_water
+GGWRplot(Coeffs_viereckschanze, "distance_water")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/distance_water_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# distance_loess
+GGWRplot(Coeffs_viereckschanze, "distance_loess")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/distance_loess_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# frostdays
+GGWRplot(Coeffs_viereckschanze, "frostdays")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/frostdays_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+# slope
+GGWRplot(Coeffs_viereckschanze, "slope")
+dev.copy(png, "Output/GWGLM/Viereckschanzen/slope_viereckschanze.png", res = 200, pointsize = 16, units = "in", width = 7, height = 5)
+dev.off()
+```
+

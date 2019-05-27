@@ -1,0 +1,398 @@
+Sun May 19 17:58:41 CEST 2019
+MaxEnt version 3.4.1
+Reading file absence
+readGrid: max memory 477626368, total allocated 216006656, free 127444336, used 88562320, increment 19064720
+Reading samples from presence
+Read samples: max memory 477626368, total allocated 216006656, free 125215360, used 90791296, increment 2228976
+Adding samples to background in feature space
+Command line used:  autorun -e Output/Maxent_v/absence -o Output/Maxent_v -s Output/Maxent_v/presence -z responsecurves
+Command line to repeat: java density.MaxEnt nowarnings noprefixes responsecurves outputdirectory=Output/Maxent_v samplesfile=Output/Maxent_v/presence environmentallayers=Output/Maxent_v/absence autorun novisible noprefixes -t aspect -t corine
+Species: species
+Layers: aspect corine distance_loess distance_water frostdays height rain slope sunhours temp tpi
+Layertypes: Categorical Categorical Continuous Continuous Continuous Continuous Continuous Continuous Continuous Continuous Continuous
+responsecurves: true
+outputdirectory: Output/Maxent_v
+samplesfile: Output/Maxent_v/presence
+environmentallayers: Output/Maxent_v/absence
+autorun: true
+visible: false
+prefixes: false
+
+getSamples: max memory 477626368, total allocated 216006656, free 122986264, used 93020392, increment 2229096
+Making features
+makeFeatures: max memory 477626368, total allocated 216006656, free 120752432, used 95254224, increment 2233832
+species: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 216006656, free 120752432, used 95254224, increment 0
+linearPredictor: max memory 477626368, total allocated 216006656, free 120752432, used 95254224, increment 0
+Deactivating (corine=113.86805)
+Deactivating (corine=118.253716)
+Deactivating (corine=121.0)
+Deactivating (corine=121.17554)
+Deactivating (corine=134.2557)
+Deactivating (corine=144.42653)
+Deactivating (corine=154.96916)
+Deactivating (corine=156.66216)
+Deactivating (corine=180.29903)
+Deactivating (corine=181.24342)
+Deactivating (corine=182.49239)
+Deactivating (corine=192.12755)
+Deactivating (corine=203.95947)
+Deactivating (corine=211.32933)
+Deactivating (corine=211.61534)
+Deactivating (corine=211.72063)
+Deactivating (corine=212.02226)
+Deactivating (corine=215.32451)
+Deactivating (corine=218.1163)
+Deactivating (corine=220.17395)
+Deactivating (corine=220.3982)
+Deactivating (corine=221.0)
+Deactivating (corine=222.33878)
+Deactivating (corine=222.41565)
+Deactivating (corine=222.5307)
+Deactivating (corine=223.88995)
+Deactivating (corine=224.3612)
+Deactivating (corine=225.92804)
+Deactivating (corine=226.21443)
+Deactivating (corine=227.04715)
+Deactivating (corine=229.48126)
+Deactivating (corine=229.84538)
+Deactivating (corine=230.66934)
+Deactivating (corine=231.03513)
+Deactivating (corine=231.81305)
+Deactivating (corine=232.84724)
+Deactivating (corine=233.14514)
+Deactivating (corine=233.84265)
+Deactivating (corine=235.62662)
+Deactivating (corine=236.48167)
+Deactivating (corine=239.24599)
+Deactivating (corine=240.25131)
+Deactivating (corine=240.28648)
+Deactivating (corine=241.84033)
+Deactivating (corine=242.84346)
+Deactivating (corine=242.88115)
+Deactivating (corine=243.29524)
+Deactivating (corine=244.43965)
+Deactivating (corine=244.47093)
+Deactivating (corine=250.63423)
+Deactivating (corine=251.29625)
+Deactivating (corine=251.7471)
+Deactivating (corine=251.88156)
+Deactivating (corine=253.2733)
+Deactivating (corine=254.01456)
+Deactivating (corine=257.87088)
+Deactivating (corine=260.3688)
+Deactivating (corine=265.5656)
+Deactivating (corine=265.61737)
+Deactivating (corine=265.9864)
+Deactivating (corine=266.01672)
+Deactivating (corine=267.28036)
+Deactivating (corine=267.33917)
+Deactivating (corine=270.7305)
+Deactivating (corine=271.22726)
+Deactivating (corine=277.9228)
+Deactivating (corine=281.42264)
+Deactivating (corine=283.60626)
+Deactivating (corine=283.7347)
+Deactivating (corine=284.0543)
+Deactivating (corine=285.233)
+Deactivating (corine=287.57376)
+Deactivating (corine=289.43356)
+Deactivating (corine=295.30807)
+Deactivating (corine=297.13217)
+Deactivating (corine=299.32248)
+Deactivating (corine=302.73404)
+Deactivating (corine=304.83228)
+Deactivating (corine=306.01364)
+Deactivating (corine=308.33752)
+Deactivating (corine=309.64124)
+Deactivating (corine=309.96613)
+Deactivating (corine=310.21063)
+Deactivating (corine=311.74197)
+Deactivating (corine=311.7911)
+Deactivating (corine=311.81778)
+Deactivating (corine=312.14255)
+Deactivating (corine=312.1544)
+Deactivating (corine=312.17355)
+Deactivating (corine=312.58432)
+Deactivating (corine=312.72302)
+Deactivating (corine=312.79224)
+Deactivating (corine=312.903)
+Deactivating (corine=313.54248)
+Deactivating (corine=314.43945)
+Deactivating (corine=320.44458)
+Deactivating (corine=320.59845)
+Deactivating (corine=321.0)
+Deactivating (corine=332.59143)
+Deactivating (corine=386.19696)
+Deactivating (corine=511.0)
+Deactivating (corine=512.0)
+FeaturedSpace: max memory 477626368, total allocated 216006656, free 120752432, used 95254224, increment 0
+Sequential: max memory 477626368, total allocated 216006656, free 120752432, used 95254224, increment 0
+Initial loss: 6.410174881966167
+Time since start: 1.051
+500: time = 1.009000 loss = 6.149977
+Resulting gain: 0.26019781884923
+Projecting...
+Writing file Output/Maxent_v/species.csv
+species response curves
+Response curve: only aspect
+Making features
+makeFeatures: max memory 477626368, total allocated 216006656, free 62415896, used 153590760, increment 58336536
+species aspect: 
+Time since start: 2.052
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 216006656, free 62415896, used 153590760, increment 0
+linearPredictor: max memory 477626368, total allocated 216006656, free 62415896, used 153590760, increment 0
+FeaturedSpace: max memory 477626368, total allocated 216006656, free 62415896, used 153590760, increment 0
+Sequential: max memory 477626368, total allocated 216006656, free 62415896, used 153590760, increment 0
+Initial loss: 6.410174881966167
+80: time = 0.020000 loss = 6.399822
+Resulting gain: 0.010352769104243542
+species response curves
+Response curve: only corine
+Making features
+makeFeatures: max memory 477626368, total allocated 216006656, free 60184528, used 155822128, increment 2231368
+species corine: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 216006656, free 60184528, used 155822128, increment 0
+linearPredictor: max memory 477626368, total allocated 216006656, free 60184528, used 155822128, increment 0
+Deactivating (corine=113.86805)
+Deactivating (corine=118.253716)
+Deactivating (corine=121.0)
+Deactivating (corine=121.17554)
+Deactivating (corine=134.2557)
+Deactivating (corine=144.42653)
+Deactivating (corine=154.96916)
+Deactivating (corine=156.66216)
+Deactivating (corine=180.29903)
+Deactivating (corine=181.24342)
+Deactivating (corine=182.49239)
+Deactivating (corine=192.12755)
+Deactivating (corine=203.95947)
+Deactivating (corine=211.32933)
+Deactivating (corine=211.61534)
+Deactivating (corine=211.72063)
+Deactivating (corine=212.02226)
+Deactivating (corine=215.32451)
+Deactivating (corine=218.1163)
+Deactivating (corine=220.17395)
+Deactivating (corine=220.3982)
+Deactivating (corine=221.0)
+Deactivating (corine=222.33878)
+Deactivating (corine=222.41565)
+Deactivating (corine=222.5307)
+Deactivating (corine=223.88995)
+Deactivating (corine=224.3612)
+Deactivating (corine=225.92804)
+Deactivating (corine=226.21443)
+Deactivating (corine=227.04715)
+Deactivating (corine=229.48126)
+Deactivating (corine=229.84538)
+Deactivating (corine=230.66934)
+Deactivating (corine=231.03513)
+Deactivating (corine=231.81305)
+Deactivating (corine=232.84724)
+Deactivating (corine=233.14514)
+Deactivating (corine=233.84265)
+Deactivating (corine=235.62662)
+Deactivating (corine=236.48167)
+Deactivating (corine=239.24599)
+Deactivating (corine=240.25131)
+Deactivating (corine=240.28648)
+Deactivating (corine=241.84033)
+Deactivating (corine=242.84346)
+Deactivating (corine=242.88115)
+Deactivating (corine=243.29524)
+Deactivating (corine=244.43965)
+Deactivating (corine=244.47093)
+Deactivating (corine=250.63423)
+Deactivating (corine=251.29625)
+Deactivating (corine=251.7471)
+Deactivating (corine=251.88156)
+Deactivating (corine=253.2733)
+Deactivating (corine=254.01456)
+Deactivating (corine=257.87088)
+Deactivating (corine=260.3688)
+Deactivating (corine=265.5656)
+Deactivating (corine=265.61737)
+Deactivating (corine=265.9864)
+Deactivating (corine=266.01672)
+Deactivating (corine=267.28036)
+Deactivating (corine=267.33917)
+Deactivating (corine=270.7305)
+Deactivating (corine=271.22726)
+Deactivating (corine=277.9228)
+Deactivating (corine=281.42264)
+Deactivating (corine=283.60626)
+Deactivating (corine=283.7347)
+Deactivating (corine=284.0543)
+Deactivating (corine=285.233)
+Deactivating (corine=287.57376)
+Deactivating (corine=289.43356)
+Deactivating (corine=295.30807)
+Deactivating (corine=297.13217)
+Deactivating (corine=299.32248)
+Deactivating (corine=302.73404)
+Deactivating (corine=304.83228)
+Deactivating (corine=306.01364)
+Deactivating (corine=308.33752)
+Deactivating (corine=309.64124)
+Deactivating (corine=309.96613)
+Deactivating (corine=310.21063)
+Deactivating (corine=311.74197)
+Deactivating (corine=311.7911)
+Deactivating (corine=311.81778)
+Deactivating (corine=312.14255)
+Deactivating (corine=312.1544)
+Deactivating (corine=312.17355)
+Deactivating (corine=312.58432)
+Deactivating (corine=312.72302)
+Deactivating (corine=312.79224)
+Deactivating (corine=312.903)
+Deactivating (corine=313.54248)
+Deactivating (corine=314.43945)
+Deactivating (corine=320.44458)
+Deactivating (corine=320.59845)
+Deactivating (corine=321.0)
+Deactivating (corine=332.59143)
+Deactivating (corine=386.19696)
+Deactivating (corine=511.0)
+Deactivating (corine=512.0)
+FeaturedSpace: max memory 477626368, total allocated 216006656, free 60184528, used 155822128, increment 0
+Sequential: max memory 477626368, total allocated 216006656, free 60184528, used 155822128, increment 0
+Initial loss: 6.410174881966167
+500: time = 0.187000 loss = 6.322948
+Resulting gain: 0.08722646489569463
+species response curves
+Response curve: only distance_loess
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 154107808, used 47743072, increment -108079056
+species distance_loess: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 154107808, used 47743072, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 154107808, used 47743072, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 154107808, used 47743072, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 154107808, used 47743072, increment 0
+Initial loss: 6.410174881966167
+140: time = 0.063000 loss = 6.230801
+Resulting gain: 0.17937397609199035
+species response curves
+Response curve: only distance_water
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 149696512, used 52154368, increment 4411296
+species distance_water: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 149696512, used 52154368, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 149696512, used 52154368, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 149696512, used 52154368, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 149696512, used 52154368, increment 0
+Initial loss: 6.410174881966167
+60: time = 0.039000 loss = 6.404319
+Resulting gain: 0.005855968523492017
+species response curves
+Response curve: only frostdays
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 145400520, used 56450360, increment 4295992
+species frostdays: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 145400520, used 56450360, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 145400520, used 56450360, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 145400520, used 56450360, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 145400520, used 56450360, increment 0
+Initial loss: 6.410174881966167
+140: time = 0.042000 loss = 6.328676
+Resulting gain: 0.0814992084151065
+species response curves
+Response curve: only height
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 143251744, used 58599136, increment 2148776
+species height: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 143251744, used 58599136, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 143251744, used 58599136, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 143251744, used 58599136, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 143251744, used 58599136, increment 0
+Initial loss: 6.410174881966167
+160: time = 0.061000 loss = 6.373343
+Resulting gain: 0.036832173222500764
+species response curves
+Response curve: only rain
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 138956560, used 62894320, increment 4295184
+species rain: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 138956560, used 62894320, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 138956560, used 62894320, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 138956560, used 62894320, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 138956560, used 62894320, increment 0
+Initial loss: 6.410174881966167
+240: time = 0.099000 loss = 6.325965
+Resulting gain: 0.08421017895289307
+species response curves
+Time since start: 3.115
+Response curve: only slope
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 134661368, used 67189512, increment 4295192
+species slope: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 134661368, used 67189512, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 134661368, used 67189512, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 134661368, used 67189512, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 134661368, used 67189512, increment 0
+Initial loss: 6.410174881966167
+240: time = 0.106000 loss = 6.363249
+Resulting gain: 0.04692589912947476
+species response curves
+Response curve: only sunhours
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 129406216, used 72444664, increment 5255152
+species sunhours: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 129406216, used 72444664, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 129406216, used 72444664, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 129406216, used 72444664, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 129406216, used 72444664, increment 0
+Initial loss: 6.410174881966167
+160: time = 0.037000 loss = 6.313364
+Resulting gain: 0.09681114765742205
+species response curves
+Response curve: only temp
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 125113360, used 76737520, increment 4292856
+species temp: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 125113360, used 76737520, increment 0
+linearPredictor: max memory 477626368, total allocated 201850880, free 125113360, used 76737520, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 125113360, used 76737520, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 125113360, used 76737520, increment 0
+Initial loss: 6.410174881966167
+140: time = 0.032000 loss = 6.325363
+Resulting gain: 0.08481216620121668
+species response curves
+Response curve: only tpi
+Making features
+makeFeatures: max memory 477626368, total allocated 201850880, free 122964584, used 78886296, increment 2148776
+species tpi: 
+Regularization values: linear/quadratic/product: 0.050, categorical: 0.250, threshold: 1.000, hinge: 0.500
+297 samples
+Density: max memory 477626368, total allocated 201850880, free 120814584, used 81036296, increment 2150000
+linearPredictor: max memory 477626368, total allocated 201850880, free 120814584, used 81036296, increment 0
+FeaturedSpace: max memory 477626368, total allocated 201850880, free 120814584, used 81036296, increment 0
+Sequential: max memory 477626368, total allocated 201850880, free 120814584, used 81036296, increment 0
+Initial loss: 6.410174881966167
+120: time = 0.056000 loss = 6.384662
+Resulting gain: 0.025512729286157665
+species response curves
+Ending
